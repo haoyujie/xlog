@@ -1,0 +1,5 @@
+/.visualgdb
+/.vs
+/*.old
+/*.user
+/build

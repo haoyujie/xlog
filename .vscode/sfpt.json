@@ -1,0 +1,15 @@
+{
+    "name": "vmware",
+    "host":"192.168.94.129",
+    "protocol":"sftp",
+    "port": 22,
+    "username":"vmuser",
+    "password":"1",
+    "remotePath":"/home/vmuser/xlog",
+    "uploadonSave": true,
+    "ignore":[
+        ".vscode",
+        ".git",
+        ".Ds_Store"
+    ]
+}
