@@ -1,7 +1,7 @@
-#include <cstring>
-#include <cstdlib>
-
 #include "xlog.h"
+#include "pthread.h"
+#include "stdio.h"
+#include "assert.h"
 
 /*
 	To test the library, include "xlog.h" from an application project
@@ -53,18 +53,18 @@ void xlog_init(void) {
 		Xblock *pBlock = s_blocks[icore];
 		pBlock->cellCount = CELLS_COUNT_PER_BLOCK;
 		pBlock->ptrCurrentCellNode = NULL;
-		//set initial value for each cell's data
+		//set initial value for each cell's data_prt
 		for (int jcell = 0; jcell < CELLS_COUNT_PER_BLOCK; jcell++) {
-			pBlock->cells[jcell]->data = NULL;
+			pBlock->cells[jcell]->data_prt = NULL;
 		}
 		//link the cells in a circular way
 		for (int jcell = 0; jcell < CELLS_COUNT_PER_BLOCK - 1; jcell++) {
-			pBlock->cells[jcell]->next = &pBlock->cells[(jcell + 1)%CELLS_COUNT_PER_BLOCK];
+			pBlock->cells[jcell]->next = (pBlock->cells[(jcell + 1)%CELLS_COUNT_PER_BLOCK]);
 		}
 		//check whether the last cell link to the first cell
-		assert(pBlock->cells[CELLS_COUNT_PER_BLOCK - 1]->next == &pBlock->cells[0]);
+		assert(pBlock->cells[CELLS_COUNT_PER_BLOCK - 1]->next == pBlock->cells[0]);
 		//set the first cell as the current cell
-		pBlock->ptrCurrentCellNode = &pBlock->cells[0];
+		pBlock->ptrCurrentCellNode = pBlock->cells[0];
     }
 }
 
@@ -80,32 +80,8 @@ void xlog_close(void) {
 }
 
 // Function to get or allocate a LogCell for a specific CPU core
-static LogCell* getNextLogCell(int core_core) {
-	if(NULL==s_logCells[cpu_core])
-	{
-		get_log_cell_sync_mutex(cpu_core);
-	}
-
-	assert (NULL != s_blocks[cpu_core]->ptrCurrentCellNode);
-    LogCellNode* currentNode = s_blocks[cpu_core]->ptrCurrentCellNode;
-    LogCellNode* nextNode = currentNode->next;
-    
-    // Use CAS to atomically update ptrCurrentCellNode
-    while (!__sync_bool_compare_and_swap(&(s_blocks[cpu_core]->ptrCurrentCellNode), 
-                                         currentNode, 
-                                         nextNode)) {
-        // If CAS fails, update currentNode and nextNode, and try again
-        currentNode = s_blocks[cpu_core]->ptrCurrentCellNode;
-        nextNode = currentNode->next;
-    }
-	//get the current cell data memory
-    LogCell* result = s_blocks[cpu_core]->ptrCurrentCellNode;
-    return result;
-}
-
-// Function to get or allocate a LogCell for a specific CPU core
-static LogCell* get_or_allocate_log_cell(int core_core) {
-    if (core_core < 0 || core_core >= CPU_CORE_COUNT) {
+static LogCell* get_or_allocate_log_cell(int cpu_core) {
+	if (cpu_core < 0 || cpu_core >= CPU_CORE_COUNT) {
         return NULL;  // Invalid core number
     }
 
@@ -134,7 +110,7 @@ static LogCell* get_or_allocate_log_cell(int core_core) {
 			}
  			// Bind the LogCell to the corresponding Xblock
 			for(int i=0;i<CELLS_COUNT_PER_BLOCK;i++){
-				s_blocks[cpu_core]->cells[i]->data = s_logCells[cpu_core][i];				
+				s_blocks[cpu_core]->cells[i]->data_prt = &s_logCells[cpu_core][i];				
             }
         }
     }
@@ -154,3 +130,28 @@ static LogCell* get_log_cell_sync_mutex(int cpu_core) {
     return result;
 }
 
+
+// Function to get or allocate a LogCell for a specific CPU core
+LogCell* getNextLogCell(int cpu_core) 
+{
+	if (NULL == s_logCells[cpu_core])
+	{
+		get_log_cell_sync_mutex(cpu_core);
+	}
+
+	assert(NULL != s_blocks[cpu_core]->ptrCurrentCellNode);
+	LogCellNode* currentNode = s_blocks[cpu_core]->ptrCurrentCellNode;
+	LogCellNode* nextNode = currentNode->next;
+    
+	// Use CAS to atomically update ptrCurrentCellNode
+	while (!__sync_bool_compare_and_swap(&(s_blocks[cpu_core]->ptrCurrentCellNode), 
+		currentNode, 
+		nextNode)) {
+		// If CAS fails, update currentNode and nextNode, and try again
+		currentNode = s_blocks[cpu_core]->ptrCurrentCellNode;
+		nextNode = currentNode->next;
+	}
+	//get the current cell data_prt memory
+	LogCell* result = s_blocks[cpu_core]->ptrCurrentCellNode->data_prt;
+	return result;
+}

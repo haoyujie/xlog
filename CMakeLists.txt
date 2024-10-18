@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 2.7)
 project(xlog)
 set(LIBRARIES_FROM_REFERENCES "")
-add_library(xlog SHARED xlog.cpp xlog.h)
+add_library(xlog SHARED xlog.h xlog.c xlogtask.c xlogdef.h xlogtimetick.c xlogtask.h xlogtimetick.h)
 target_link_libraries(xlog "${LIBRARIES_FROM_REFERENCES}")
 
 add_executable(xlogtest xlogtest.cpp AddTest.c)
@@ -20,4 +20,5 @@ target_compile_options(xlogtest PRIVATE
 target_link_libraries(xlogtest PRIVATE
   pthread
 )
+set_source_files_properties(xlog.cpp PROPERTIES HEADER_FILE_ONLY TRUE)
 
