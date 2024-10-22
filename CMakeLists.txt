@@ -4,19 +4,28 @@
 cmake_minimum_required(VERSION 2.7)
 project(xlog)
 set(LIBRARIES_FROM_REFERENCES "")
-add_library(xlog SHARED xlog.h xlog.c xlogtask.c xlogdef.h xlogtimetick.c xlogtask.h xlogtimetick.h)
-target_link_libraries(xlog "${LIBRARIES_FROM_REFERENCES}")
+
+# Option to choose between static and dynamic library
+option(XLOG_STATIC "Build xlog as a static library (1) or shared library (0)" 1)
+
+# Determine library type based on XLOG_STATIC option
+if(XLOG_STATIC)
+    add_library(xlog STATIC xlog.h xlog.c xlogtask.c xlogdef.h xlogtimetick.c xlogtask.h xlogtimetick.h)
+else()
+    add_library(xlog SHARED xlog.h xlog.c xlogtask.c xlogdef.h xlogtimetick.c xlogtask.h xlogtimetick.h)
+    target_link_libraries(xlog "${LIBRARIES_FROM_REFERENCES}")
+endif()
 
 add_executable(xlogtest xlogtest.cpp AddTest.c)
 target_link_libraries(xlogtest PRIVATE xlog)
 
-# add compile params
+# Add compile params
 target_compile_options(xlogtest PRIVATE
   "-march=nocona"
   "-mtune=generic"
 )
 
-# link params
+# Link params
 target_link_libraries(xlogtest PRIVATE
   pthread
 )

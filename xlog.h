@@ -43,6 +43,14 @@ void xlog_close(void);
 
 int xlogTest();
 
+// Function to get a new xlogblock and save taskinfo to it
+LogCell* xlog_push_taskgen(int cpu_core, uint32_t threadid, int16_t radioframe, int16_t slot, uint32_t tasktype, uint32_t taskid, uint32_t taskqueueid);
+// task started and push inf to xlog
+LogCell* xlog_push_taskexec(int cpu_core, uint32_t threadid, int16_t radioframe, int16_t slot, uint32_t tasktype, uint32_t taskid, uint32_t taskqueueid);
+// task finished and push inf to xlog
+LogCell* xlog_push_taskfinish(int cpu_core, uint32_t threadid, int16_t radioframe, int16_t slot, uint32_t tasktype, uint32_t taskid, uint32_t taskqueueid);
+
+
 #ifdef __cplusplus
 }
 #endif
